@@ -1,12 +1,12 @@
 """
 app.py — Multi-Modal AI Talent Assessment System
-Flask web server with clean routing, robust error handling, and progress tracking.
+Flask web server with clean routing, robust error handling.
 """
 
 import os
 import uuid
 import traceback
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request
 import pdfplumber
 
 from models import ResumeMatcher, SpeechAnalyzer, fuse_scores
@@ -18,7 +18,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"]     = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER"]      = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024   # 200 MB
 
 ALLOWED_RESUME = {"txt", "pdf"}
@@ -30,13 +30,11 @@ def allowed(filename: str, allowed_set: set) -> bool:
 
 
 def safe_filename(filename: str) -> str:
-    """UUID-prefix to avoid collisions + path traversal."""
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "bin"
     return f"{uuid.uuid4().hex}.{ext}"
 
 
 def read_resume(path: str) -> str:
-    """Read .pdf or .txt resume, return raw text."""
     try:
         if path.lower().endswith(".pdf"):
             with pdfplumber.open(path) as pdf:
@@ -53,14 +51,6 @@ def read_resume(path: str) -> str:
     return ""
 
 
-# ── Pre-load singleton models at startup (saves time on first request) ──────────
-print("[Startup] Loading NLP model…")
-_matcher  = ResumeMatcher()
-print("[Startup] Loading Speech model…")
-_speech   = SpeechAnalyzer()
-print("[Startup] Models ready ✓")
-
-
 # ── Routes ─────────────────────────────────────────────────────────────────────
 @app.route("/", methods=["GET"])
 def index():
@@ -69,13 +59,17 @@ def index():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    error = None
+    resume_path = None
+    video_path  = None
+    audio_path  = None
+
     try:
         # ── Validate inputs ────────────────────────────────────────────────
         resume_file = request.files.get("resume")
         video_file  = request.files.get("video")
         job_desc    = request.form.get("job_desc", "").strip()
 
+        error = None
         if not resume_file or not resume_file.filename:
             error = "Please upload a resume (.pdf or .txt)."
         elif not allowed(resume_file.filename, ALLOWED_RESUME):
@@ -114,18 +108,18 @@ def analyze():
         if len(clean_text) < 50:
             return render_template("index.html",
                 error="Could not extract enough text from the resume. "
-                      "Try a text-based PDF or .txt file.")
+                      "Try a text-based PDF or a .txt file.")
 
-        resume_score = _matcher.match(clean_text, job_desc)
+        resume_score = ResumeMatcher().match(clean_text, job_desc)
         print(f"[App] Resume score: {resume_score}")
 
         # ── Video / Fraud ──────────────────────────────────────────────────
         fraud_flag, emotions, fraud_msg, vid_stats = process_video(video_path)
-        print(f"[App] Fraud={fraud_flag} | Emotions={emotions[:5]}… | Stats={vid_stats}")
+        print(f"[App] Fraud={fraud_flag} | Emotions sample={emotions[:5]} | Stats={vid_stats}")
 
         # ── Speech ────────────────────────────────────────────────────────
         try:
-            speech_sentiment = _speech.analyze(audio_path)
+            speech_sentiment = SpeechAnalyzer().analyze(audio_path)
         except Exception as e:
             print(f"[App] Speech analysis error: {e}")
             speech_sentiment = "neutral"
@@ -136,26 +130,24 @@ def analyze():
         )
         print(f"[App] Final={final_score} | {suitability}")
 
-        # Emotion summary for display
+        # ── Emotion summary ────────────────────────────────────────────────
         from collections import Counter
-        emotion_counts = Counter(emotions)
+        emotion_counts   = Counter(emotions)
         dominant_emotion = emotion_counts.most_common(1)[0][0] if emotion_counts else "neutral"
-        emotion_summary  = ", ".join(f"{k} ({v})" for k, v in emotion_counts.most_common(4))
 
         return render_template(
             "result.html",
-            resume_score    = resume_score,
-            final           = final_score,
-            suitability     = suitability,
-            comment         = comment,
-            breakdown       = breakdown,
-            emotions        = emotions,
-            emotion_summary = emotion_summary,
-            dominant_emotion= dominant_emotion,
-            speech          = speech_sentiment,
-            fraud           = fraud_msg,
-            fraud_flag      = fraud_flag,
-            vid_stats       = vid_stats,
+            resume_score     = resume_score,
+            final            = final_score,
+            suitability      = suitability,
+            comment          = comment,
+            breakdown        = breakdown,
+            emotions         = emotions,
+            dominant_emotion = dominant_emotion,
+            speech           = speech_sentiment,
+            fraud            = fraud_msg,
+            fraud_flag       = fraud_flag,
+            vid_stats        = vid_stats,
         )
 
     except Exception:
@@ -169,7 +161,7 @@ def analyze():
         # Clean up uploaded files to save disk space
         for path in [resume_path, video_path, audio_path]:
             try:
-                if os.path.exists(path):
+                if path and os.path.exists(path):
                     os.remove(path)
             except Exception:
                 pass

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assessment Report — TalentMind</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #06070d;
+      --surface: #0d0f1a;
+      --surface2:#111320;
+      --border:  rgba(255,255,255,.07);
+      --accent:  #7DF9E0;
+      --accent2: #B97FFF;
+      --accent3: #FF7F9A;
+      --green:   #3DFF7A;
+      --warn:    #FFB347;
+      --danger:  #FF5A5A;
+      --text:    #E8EAF2;
+      --muted:   #676A82;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; overflow-x: hidden;
+    }
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background:
+        radial-gradient(ellipse 70% 45% at 15% -5%, rgba(125,249,224,.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 105%, rgba(185,127,255,.06) 0%, transparent 60%);
+    }
+    body::after {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .page { position:relative; z-index:1; max-width:960px; margin:0 auto; padding:0 24px 80px; }
+
+    /* ── Nav ── */
+    nav {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:28px 0 0;
+    }
+    .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; display:flex; align-items:center; gap:10px; }
+    .logo-mark { width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:800; color:#06070d; }
+    .back-btn {
+      display:flex; align-items:center; gap:7px; padding:8px 18px;
+      border:1px solid var(--border); border-radius:20px;
+      font-size:.8rem; color:var(--muted); text-decoration:none;
+      transition:border-color .2s, color .2s;
+    }
+    .back-btn:hover { border-color:rgba(125,249,224,.3); color:var(--accent); }
+
+    /* ── Report header ── */
+    .report-header { text-align:center; padding:52px 0 44px; }
+    .report-label {
+      display:inline-block; font-size:.72rem; letter-spacing:.14em;
+      text-transform:uppercase; color:var(--muted); margin-bottom:16px;
+    }
+    h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:clamp(2rem,5vw,3.2rem); letter-spacing:-.02em; margin-bottom:12px; }
+    .report-ts { font-size:.8rem; color:var(--muted); }
+
+    /* ── Suitability banner ── */
+    .suit-banner {
+      border-radius:20px; padding:28px 36px;
+      display:flex; align-items:center; justify-content:space-between; gap:20px;
+      margin-bottom:32px; flex-wrap:wrap;
+    }
+    .suit-banner.highly { background:linear-gradient(135deg,rgba(61,255,122,.12),rgba(125,249,224,.06)); border:1px solid rgba(61,255,122,.25); }
+    .suit-banner.suitable { background:linear-gradient(135deg,rgba(125,249,224,.1),rgba(185,127,255,.06)); border:1px solid rgba(125,249,224,.2); }
+    .suit-banner.borderline { background:linear-gradient(135deg,rgba(255,179,71,.1),rgba(255,127,154,.06)); border:1px solid rgba(255,179,71,.25); }
+    .suit-banner.not { background:linear-gradient(135deg,rgba(255,90,90,.1),rgba(255,127,154,.06)); border:1px solid rgba(255,90,90,.25); }
+
+    .suit-score { font-family:'Syne',sans-serif; font-size:clamp(3rem,8vw,5.5rem); font-weight:800; line-height:1; }
+    .suit-score sup { font-size:1.4rem; opacity:.6; }
+    .suit-label-block { flex:1; }
+    .suit-verdict { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:700; margin-bottom:8px; }
+    .suit-comment { font-size:.9rem; color:var(--muted); line-height:1.6; max-width:520px; }
+
+    /* colour for verdict */
+    .col-green { color:var(--green); }
+    .col-accent { color:var(--accent); }
+    .col-warn   { color:var(--warn); }
+    .col-danger { color:var(--danger); }
+
+    /* ── Grid cards ── */
+    .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+    @media(max-width:640px){ .grid3 { grid-template-columns:1fr; } }
+
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+    @media(max-width:640px){ .grid2 { grid-template-columns:1fr; } }
+
+    .card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:18px; padding:24px;
+    }
+    .card-label { font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+    .card-value { font-family:'Syne',sans-serif; font-size:2.4rem; font-weight:800; line-height:1; }
+    .card-sub { font-size:.8rem; color:var(--muted); margin-top:6px; }
+
+    /* ── Progress bar ── */
+    .bar-wrap { margin-top:10px; height:6px; background:rgba(255,255,255,.06); border-radius:3px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:3px; transition:width 1.2s cubic-bezier(.4,0,.2,1); }
+    .bar-accent  { background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+    .bar-green   { background:linear-gradient(90deg,var(--green),var(--accent)); }
+    .bar-purple  { background:linear-gradient(90deg,var(--accent2),var(--accent3)); }
+    .bar-warn    { background:linear-gradient(90deg,var(--warn),var(--accent3)); }
+    .bar-danger  { background:linear-gradient(90deg,var(--danger),var(--warn)); }
+
+    /* ── Radar ── */
+    .radar-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:28px; margin-bottom:24px; }
+    .section-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; margin-bottom:20px; letter-spacing:-.01em; }
+    .radar-wrap { max-width:380px; margin:0 auto; }
+
+    /* ── Fraud ── */
+    .fraud-ok   { border:1px solid rgba(61,255,122,.25); background:rgba(61,255,122,.05); }
+    .fraud-warn { border:1px solid rgba(255,90,90,.3);   background:rgba(255,90,90,.07); }
+
+    /* ── Emotion chips ── */
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .chip { font-size:.75rem; padding:4px 12px; border-radius:20px; border:1px solid var(--border); }
+
+    /* ── Insights grid ── */
+    .insight-list { list-style:none; display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+    .insight-list li { display:flex; align-items:flex-start; gap:10px; font-size:.88rem; line-height:1.5; }
+    .i-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; margin-top:7px; }
+    .i-green  { background:var(--green); }
+    .i-warn   { background:var(--warn); }
+
+    /* ── Stats row ── */
+    .stats-row { display:flex; gap:24px; flex-wrap:wrap; margin-top:12px; }
+    .stat { }
+    .stat-val { font-family:'Syne',sans-serif; font-weight:700; font-size:1.5rem; }
+    .stat-lbl { font-size:.72rem; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+
+    /* ── Action ── */
+    .action-row { text-align:center; margin-top:44px; }
+    .btn-new {
+      display:inline-flex; align-items:center; gap:10px;
+      padding:16px 36px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      border-radius:14px; font-family:'Syne',sans-serif;
+      font-weight:700; font-size:.95rem; color:#06070d;
+      text-decoration:none; transition:opacity .2s, transform .2s;
+    }
+    .btn-new:hover { opacity:.9; transform:translateY(-2px); }
+
+    /* ── Fade ── */
+    .fade-up { opacity:0; transform:translateY(20px); animation:fadeUp .6s ease forwards; }
+    @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+    .d1{animation-delay:.05s;} .d2{animation-delay:.15s;} .d3{animation-delay:.25s;}
+    .d4{animation-delay:.35s;} .d5{animation-delay:.45s;} .d6{animation-delay:.55s;}
+
+    footer { text-align:center; font-size:.72rem; color:var(--muted); padding-top:36px; line-height:1.9; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Nav -->
+  <nav class="fade-up d1">
+    <div class="logo"><div class="logo-mark">TM</div> TalentMind</div>
+    <a href="/" class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      New Assessment
+    </a>
+  </nav>
+
+  <!-- Header -->
+  <div class="report-header fade-up d2">
+    <div class="report-label">Candidate Assessment Report</div>
+    <h1>Multi-Modal Intelligence<br>Evaluation</h1>
+    <div class="report-ts" id="timestamp"></div>
+  </div>
+
+  <!-- Suitability Banner -->
+  {% set suit_class = 'highly' if 'Highly' in suitability else ('suitable' if suitability == 'Suitable' else ('borderline' if suitability == 'Borderline' else 'not')) %}
+  {% set score_col  = 'col-green' if 'Highly' in suitability else ('col-accent' if suitability == 'Suitable' else ('col-warn' if suitability == 'Borderline' else 'col-danger')) %}
+
+  <div class="suit-banner {{ suit_class }} fade-up d3">
+    <div class="suit-score {{ score_col }}">{{ final }}<sup>%</sup></div>
+    <div class="suit-label-block">
+      <div class="suit-verdict {{ score_col }}">{{ suitability }}</div>
+      <div class="suit-comment">{{ comment }}</div>
+    </div>
+  </div>
+
+  <!-- Score Breakdown -->
+  <div class="grid3 fade-up d3">
+    <div class="card">
+      <div class="card-label">Resume Match</div>
+      <div class="card-value col-accent">{{ resume_score }}%</div>
+      <div class="card-sub">Technical alignment</div>
+      <div class="bar-wrap"><div class="bar-fill bar-accent" style="width:{{ resume_score }}%"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Emotion Score</div>
+      <div class="card-value col-green">{{ breakdown.emotion }}%</div>
+      <div class="card-sub">Engagement &amp; affect</div>
+      <div class="bar-wrap"><div class="bar-fill bar-green" style="width:{{ breakdown.emotion }}%"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Speech Sentiment</div>
+      <div class="card-value col-accent2" style="color:var(--accent2)">{{ breakdown.speech }}%</div>
+      <div class="card-sub">Verbal confidence</div>
+      <div class="bar-wrap"><div class="bar-fill bar-purple" style="width:{{ breakdown.speech }}%"></div></div>
+    </div>
+  </div>
+
+  <!-- Radar + Fraud row -->
+  <div class="grid2 fade-up d4">
+
+    <!-- Radar -->
+    <div class="card" style="padding:24px 20px;">
+      <div class="section-title">Performance Radar</div>
+      <div class="radar-wrap">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Fraud check -->
+    {% set fraud_ok = 'No fraud' in fraud %}
+    <div class="card {{ 'fraud-ok' if fraud_ok else 'fraud-warn' }}">
+      <div class="card-label">Fraud &amp; Authenticity</div>
+      <div style="font-size:2.8rem; margin:12px 0;">{{ '✅' if fraud_ok else '⚠️' }}</div>
+      <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem; margin-bottom:8px; color:{{ 'var(--green)' if fraud_ok else 'var(--danger)' }};">
+        {{ 'Verified — No Issues' if fraud_ok else 'Suspicious Activity' }}
+      </div>
+      <div style="font-size:.85rem; color:var(--muted); line-height:1.6;">{{ fraud }}</div>
+      {% if vid_stats %}
+      <div class="stats-row" style="margin-top:18px;">
+        <div class="stat">
+          <div class="stat-val">{{ vid_stats.frames_sampled }}</div>
+          <div class="stat-lbl">Frames</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">{{ vid_stats.gaze_deviations }}</div>
+          <div class="stat-lbl">Gaze Dev.</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">{{ vid_stats.no_face_frames }}</div>
+          <div class="stat-lbl">No Face</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Strengths & Improvements + Behavioural Insights -->
+  <div class="grid2 fade-up d5">
+
+    <div class="card">
+      <div class="section-title" style="color:var(--green);">✦ Key Strengths</div>
+      <ul class="insight-list">
+        {% if resume_score >= 70 %}
+        <li><div class="i-dot i-green"></div>Strong technical alignment with the job description</li>
+        {% endif %}
+        {% if speech == 'positive' %}
+        <li><div class="i-dot i-green"></div>Positive and confident verbal communication</li>
+        {% endif %}
+        {% if dominant_emotion in ['happy', 'neutral', 'surprise'] %}
+        <li><div class="i-dot i-green"></div>Positive / neutral emotional engagement throughout</li>
+        {% endif %}
+        {% if fraud_ok %}
+        <li><div class="i-dot i-green"></div>Interview passed all authenticity checks</li>
+        {% endif %}
+        {% if resume_score < 70 and speech != 'positive' and dominant_emotion not in ['happy','neutral','surprise'] %}
+        <li><div class="i-dot i-green"></div>Candidate submitted a complete application</li>
+        {% endif %}
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="color:var(--warn);">⚑ Areas to Improve</div>
+      <ul class="insight-list">
+        {% if resume_score < 65 %}
+        <li><div class="i-dot i-warn"></div>Technical skills need better alignment with the role</li>
+        {% endif %}
+        {% if speech != 'positive' %}
+        <li><div class="i-dot i-warn"></div>Speech confidence and tone could be more assertive</li>
+        {% endif %}
+        {% if dominant_emotion in ['angry','sad','fear','disgust'] %}
+        <li><div class="i-dot i-warn"></div>Negative emotional cues detected — practice relaxed delivery</li>
+        {% endif %}
+        {% if not fraud_ok %}
+        <li><div class="i-dot i-warn"></div>Authenticity flags raised — manual review advised</li>
+        {% endif %}
+        <li><div class="i-dot i-warn"></div>Continue practising structured STAR-format answers</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Emotional & Speech Detail -->
+  <div class="card fade-up d6" style="margin-bottom:24px;">
+    <div class="section-title">Behavioural Intelligence Breakdown</div>
+    <div class="grid2" style="margin-bottom:0; gap:24px;">
+      <div>
+        <div class="card-label">Dominant Emotion Detected</div>
+        <div style="font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:700; text-transform:capitalize; margin:8px 0;">
+          {{ dominant_emotion }}
+        </div>
+        <div class="card-label" style="margin-top:16px; margin-bottom:8px;">Emotion Distribution</div>
+        <div class="chips">
+          {% for e in emotions[:20] %}
+          <div class="chip">{{ e }}</div>
+          {% endfor %}
+          {% if emotions|length > 20 %}<div class="chip">+{{ emotions|length - 20 }} more</div>{% endif %}
+        </div>
+      </div>
+      <div>
+        <div class="card-label">Speech Sentiment Analysis</div>
+        <div style="font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:700; text-transform:capitalize; margin:8px 0;
+          color:{{ 'var(--green)' if speech == 'positive' else ('var(--muted)' if speech == 'neutral' else 'var(--danger)') }}">
+          {{ speech }}
+        </div>
+        <div style="font-size:.85rem; color:var(--muted); line-height:1.65; margin-top:10px;">
+          {% if speech == 'positive' %}
+          The candidate demonstrated clear, confident communication with positive vocal tone and minimal hesitation.
+          {% elif speech == 'neutral' %}
+          Candidate displayed a measured, even tone. Slight improvements in energy and vocal variation would help.
+          {% else %}
+          Speech analysis flagged low confidence or negative tonal patterns. Consider presentation coaching.
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action -->
+  <div class="action-row fade-up d6">
+    <a href="/" class="btn-new">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M5 12h14" stroke="#06070d" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Analyse Another Candidate
+    </a>
+  </div>
+
+  <footer>
+    TalentMind — Multi-Modal AI Talent Assessment System<br>
+    Final Year Major Project · Dept. of AI &amp; ML · Guru Tegh Bahadur Institute of Technology · New Delhi
+  </footer>
+
+</div>
+
+<script>
+  // Timestamp
+  document.getElementById('timestamp').textContent =
+    'Generated on ' + new Date().toLocaleString('en-IN', {
+      dateStyle:'long', timeStyle:'short'
+    });
+
+  // Radar Chart
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  const resumeScore = {{ resume_score }};
+  const emotionScore = {{ breakdown.emotion }};
+  const speechScore = {{ breakdown.speech }};
+  const finalScore  = {{ final }};
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Technical Fit', 'Engagement', 'Speech', 'Authenticity', 'Overall'],
+      datasets: [{
+        label: 'Candidate',
+        data: [
+          resumeScore,
+          emotionScore,
+          speechScore,
+          {{ 20 if fraud_flag else 88 }},
+          finalScore
+        ],
+        backgroundColor: 'rgba(125,249,224,.12)',
+        borderColor: '#7DF9E0',
+        borderWidth: 2,
+        pointBackgroundColor: '#B97FFF',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { stepSize: 25, color: 'rgba(103,106,130,.7)', font:{size:10} },
+          grid:  { color: 'rgba(255,255,255,.06)' },
+          pointLabels: { color: '#676A82', font:{size:11, family:"'DM Sans', sans-serif"} },
+          angleLines: { color: 'rgba(255,255,255,.05)' },
+        }
+      },
+      plugins: { legend:{ display:false } }
+    }
+  });
+
+  // Animate progress bars
+  window.addEventListener('load', () => {
+    document.querySelectorAll('.bar-fill').forEach(b => {
+      const w = b.style.width;
+      b.style.width = '0%';
+      setTimeout(() => { b.style.width = w; }, 300);
+    });
+  });
+</script>
+</body>
+</html>

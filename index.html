@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TalentMind — AI Recruitment Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #06070d;
+      --surface:   #0d0f1a;
+      --border:    rgba(255,255,255,.07);
+      --accent:    #7DF9E0;
+      --accent2:   #B97FFF;
+      --accent3:   #FF7F9A;
+      --text:      #E8EAF2;
+      --muted:     #676A82;
+      --danger:    #FF5A5A;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise + grid overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(125,249,224,.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 85% 110%, rgba(185,127,255,.07) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Grid dots ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .page { position: relative; z-index: 1; max-width: 840px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* ── Nav ── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 28px 0 0;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.25rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .logo-mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; font-weight: 800; color: #06070d;
+    }
+    .badge {
+      font-size: .7rem; padding: 4px 10px; border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--muted); letter-spacing: .06em;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #3DFF7A; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+    /* ── Hero ── */
+    .hero { text-align: center; padding: 72px 0 56px; }
+
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: .78rem; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 24px;
+    }
+    .eyebrow::before, .eyebrow::after {
+      content: ''; width: 24px; height: 1px; background: var(--accent); opacity: .5;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: clamp(2.6rem, 6vw, 4.2rem);
+      line-height: 1.08; letter-spacing: -.02em;
+      margin-bottom: 22px;
+    }
+    .grad {
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 60%, var(--accent3) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 1.05rem; color: var(--muted); max-width: 520px; margin: 0 auto 40px;
+      line-height: 1.65;
+    }
+
+    /* ── Pill tags ── */
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 56px; }
+    .tag {
+      font-size: .75rem; padding: 5px 14px; border-radius: 20px;
+      border: 1px solid var(--border); color: var(--muted);
+      letter-spacing: .04em;
+    }
+
+    /* ── Form Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px; padding: 40px;
+    }
+
+    /* ── Error banner ── */
+    .error-banner {
+      background: rgba(255,90,90,.1);
+      border: 1px solid rgba(255,90,90,.3);
+      color: #FF8A8A;
+      padding: 14px 18px; border-radius: 12px; margin-bottom: 28px;
+      font-size: .9rem; display: flex; align-items: flex-start; gap: 10px;
+    }
+    .error-banner svg { flex-shrink: 0; margin-top: 2px; }
+
+    /* ── Field ── */
+    .field { margin-bottom: 28px; }
+    .field-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .75rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px; font-weight: 500;
+    }
+    .field-label span { color: var(--accent); }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem; line-height: 1.6;
+      resize: vertical;
+      transition: border-color .2s;
+      outline: none;
+    }
+    textarea:focus, input[type="text"]:focus {
+      border-color: rgba(125,249,224,.4);
+    }
+    textarea::placeholder { color: var(--muted); }
+
+    /* ── Upload zones ── */
+    .uploads { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+    @media(max-width:600px){ .uploads { grid-template-columns: 1fr; } }
+
+    .upload-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: 16px; padding: 28px 20px;
+      text-align: center; cursor: pointer;
+      transition: border-color .25s, background .25s;
+      position: relative; overflow: hidden;
+    }
+    .upload-zone:hover { border-color: rgba(125,249,224,.35); background: rgba(125,249,224,.025); }
+    .upload-zone.active { border-color: var(--accent); background: rgba(125,249,224,.05); }
+    .upload-zone.has-file { border-color: rgba(61,255,122,.4); background: rgba(61,255,122,.04); }
+
+    .upload-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+    .upload-title { font-size: .9rem; font-weight: 500; margin-bottom: 4px; }
+    .upload-hint { font-size: .75rem; color: var(--muted); }
+    .upload-filename {
+      font-size: .8rem; color: #3DFF7A; margin-top: 10px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+
+    /* ── Submit ── */
+    .btn-submit {
+      width: 100%; padding: 18px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      border: none; border-radius: 14px; cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1rem; letter-spacing: .04em;
+      color: #06070d;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: opacity .2s, transform .2s;
+      position: relative; overflow: hidden;
+    }
+    .btn-submit:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* shimmer on button */
+    .btn-submit::after {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+      animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer { to { left: 160%; } }
+
+    /* ── Processing overlay ── */
+    #overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(6,7,13,.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+    }
+    #overlay.show { display: flex; }
+
+    .spinner {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .process-title {
+      font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700;
+    }
+    .process-steps { display: flex; flex-direction: column; gap: 10px; width: 300px; }
+    .step {
+      display: flex; align-items: center; gap: 12px;
+      font-size: .85rem; color: var(--muted); transition: color .4s;
+    }
+    .step.active { color: var(--accent); }
+    .step.done { color: #3DFF7A; }
+    .step-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      background: var(--border); transition: background .4s;
+    }
+    .step.active .step-dot { background: var(--accent); animation: pulse 1s infinite; }
+    .step.done .step-dot { background: #3DFF7A; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; font-size: .75rem; color: var(--muted);
+      padding-top: 40px; line-height: 1.8;
+    }
+
+    /* ── Fade-in ── */
+    .fade-up {
+      opacity: 0; transform: translateY(24px);
+      animation: fadeUp .7s ease forwards;
+    }
+    @keyframes fadeUp { to { opacity:1; transform: translateY(0); } }
+    .d1 { animation-delay: .05s; }
+    .d2 { animation-delay: .15s; }
+    .d3 { animation-delay: .25s; }
+    .d4 { animation-delay: .35s; }
+  </style>
+</head>
+<body>
+
+<!-- Processing overlay -->
+<div id="overlay">
+  <div class="spinner"></div>
+  <div class="process-title">Analysing Candidate…</div>
+  <div class="process-steps">
+    <div class="step active" id="s1"><div class="step-dot"></div>Reading resume &amp; matching job description</div>
+    <div class="step" id="s2"><div class="step-dot"></div>Extracting audio from video</div>
+    <div class="step" id="s3"><div class="step-dot"></div>Analysing facial expressions &amp; gaze</div>
+    <div class="step" id="s4"><div class="step-dot"></div>Processing speech sentiment</div>
+    <div class="step" id="s5"><div class="step-dot"></div>Fusing scores &amp; generating report</div>
+  </div>
+</div>
+
+<div class="page">
+  <!-- Nav -->
+  <nav class="fade-up d1">
+    <div class="logo">
+      <div class="logo-mark">TM</div>
+      TalentMind
+    </div>
+    <div class="badge"><div class="dot"></div>SYSTEM LIVE</div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero fade-up d2">
+    <div class="eyebrow">Multi-Modal Assessment</div>
+    <h1>Hire smarter with<br><span class="grad">AI you can trust</span></h1>
+    <p class="subtitle">
+      Resume intelligence · Facial emotion analysis · Speech sentiment ·
+      Real-time fraud detection — all in one unified score.
+    </p>
+    <div class="tags">
+      <div class="tag">NLP Resume Matching</div>
+      <div class="tag">Computer Vision</div>
+      <div class="tag">Speech LSTM</div>
+      <div class="tag">Fraud Detection</div>
+      <div class="tag">Explainable AI</div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="card fade-up d3">
+
+    {% if error %}
+    <div class="error-banner">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="#FF5A5A" stroke-width="1.5"/>
+        <path d="M8 5v3.5M8 11h.01" stroke="#FF5A5A" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/analyze" enctype="multipart/form-data" id="mainForm">
+
+      <!-- Job Description -->
+      <div class="field">
+        <div class="field-label">
+          <span>◆</span> Job Description
+        </div>
+        <textarea name="job_desc" rows="5" required
+          placeholder="Describe the role: required skills, responsibilities, and qualifications…">{{ request.form.get('job_desc', '') }}</textarea>
+      </div>
+
+      <!-- File Uploads -->
+      <div class="field-label" style="margin-bottom:12px;">
+        <span>◆</span> Upload Files
+      </div>
+      <div class="uploads">
+
+        <label class="upload-zone" id="resumeZone">
+          <span class="upload-icon">📄</span>
+          <div class="upload-title">Candidate Resume</div>
+          <div class="upload-hint">.pdf or .txt</div>
+          <div class="upload-filename" id="resumeLabel">No file chosen</div>
+          <input type="file" name="resume" accept=".pdf,.txt" required id="resumeInput" />
+        </label>
+
+        <label class="upload-zone" id="videoZone">
+          <span class="upload-icon">🎥</span>
+          <div class="upload-title">Interview Video</div>
+          <div class="upload-hint">.mp4 / .webm / .mov — max 200 MB</div>
+          <div class="upload-filename" id="videoLabel">No file chosen</div>
+          <input type="file" name="video" accept=".mp4,.webm,.mov,.avi" required id="videoInput" />
+        </label>
+
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2Z" stroke="#06070d" stroke-width="1.8"/>
+          <path d="M12 8v4l3 3" stroke="#06070d" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        Analyse Candidate
+      </button>
+
+    </form>
+  </div>
+
+  <!-- Footer -->
+  <footer class="fade-up d4">
+    Powered by Sentence-Transformers · ResNet-18 · LSTM · OpenCV<br>
+    Final Year Major Project — Dept. of AI &amp; ML · Guru Tegh Bahadur Institute of Technology
+  </footer>
+</div>
+
+<script>
+  // File input feedback
+  function bindFile(inputId, zoneId, labelId) {
+    const inp  = document.getElementById(inputId);
+    const zone = document.getElementById(zoneId);
+    const lbl  = document.getElementById(labelId);
+    inp.addEventListener('change', () => {
+      if (inp.files.length) {
+        const name = inp.files[0].name;
+        lbl.textContent = name.length > 28 ? name.slice(0,25)+'…' : name;
+        zone.classList.add('has-file');
+      }
+    });
+    // Drag-over highlight
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('active'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('active'));
+    zone.addEventListener('drop', () => zone.classList.remove('active'));
+  }
+  bindFile('resumeInput','resumeZone','resumeLabel');
+  bindFile('videoInput','videoZone','videoLabel');
+
+  // Processing overlay + animated steps
+  document.getElementById('mainForm').addEventListener('submit', function(e) {
+    const resume = document.getElementById('resumeInput').files[0];
+    const video  = document.getElementById('videoInput').files[0];
+    const jd     = document.querySelector('textarea[name="job_desc"]').value.trim();
+    if (!resume || !video || !jd) return;  // let native validation handle
+
+    document.getElementById('overlay').classList.add('show');
+    document.getElementById('submitBtn').disabled = true;
+
+    const steps = ['s1','s2','s3','s4','s5'];
+    let current = 0;
+
+    function advance() {
+      if (current > 0) {
+        document.getElementById(steps[current-1]).classList.remove('active');
+        document.getElementById(steps[current-1]).classList.add('done');
+      }
+      if (current < steps.length) {
+        document.getElementById(steps[current]).classList.add('active');
+        current++;
+        setTimeout(advance, 2800 + Math.random() * 1200);
+      }
+    }
+    advance();
+  });
+</script>
+
+</body>
+</html>
